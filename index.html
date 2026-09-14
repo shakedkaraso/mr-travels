@@ -1,0 +1,126 @@
+<!doctype html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mr-Travel — בקרוב</title>
+<meta name="description" content="Mr-Travel — האתר שלכם לטיסות זולות, בקרוב.">
+<style>
+  :root{
+    --ink:#2b2b2e;
+    --ink-soft:#5a5a5f;
+    --paper:#f6f3ee;
+    --card:#ffffff;
+    --primary:#a9c9c4;
+    --onprimary:#264b45;
+    --line:#e4e0da;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;height:100%;}
+  body{
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    min-height:100vh;
+    background:var(--paper);
+    color:var(--ink);
+    font-family:"Segoe UI","Arial Hebrew",Rubik,Assistant,Arial,sans-serif;
+    padding:24px;
+  }
+  .card{
+    max-width:440px;
+    width:100%;
+    background:var(--card);
+    border-radius:22px;
+    box-shadow:0 1px 2px rgba(43,43,46,.05), 0 20px 44px -20px rgba(43,43,46,.28);
+    padding:40px 32px 34px;
+    text-align:center;
+  }
+  .badge{width:120px;height:auto;margin:0 auto 18px;display:block;}
+  h1{
+    font-size:15px;
+    font-weight:800;
+    letter-spacing:.14em;
+    text-transform:uppercase;
+    margin:0 0 14px;
+    color:var(--ink);
+  }
+  .headline{
+    font-size:22px;
+    font-weight:800;
+    margin:0 0 10px;
+    line-height:1.4;
+  }
+  p.lede{
+    font-size:14.5px;
+    color:var(--ink-soft);
+    margin:0 0 26px;
+    line-height:1.6;
+  }
+  form{
+    display:flex;
+    gap:8px;
+    margin-bottom:14px;
+  }
+  input[type="email"]{
+    flex:1;
+    min-width:0;
+    border:1px solid var(--line);
+    border-radius:999px;
+    padding:11px 16px;
+    font-size:14px;
+    font-family:inherit;
+    background:var(--paper);
+    color:var(--ink);
+  }
+  input[type="email"]:focus{
+    outline:2px solid var(--onprimary);
+    outline-offset:1px;
+  }
+  button{
+    border:none;
+    border-radius:999px;
+    padding:11px 20px;
+    font-size:14px;
+    font-weight:700;
+    font-family:inherit;
+    background:var(--primary);
+    color:var(--onprimary);
+    cursor:pointer;
+    white-space:nowrap;
+  }
+  button:focus-visible{
+    outline:2px solid var(--onprimary);
+    outline-offset:2px;
+  }
+  .note{
+    font-size:12px;
+    color:var(--ink-soft);
+  }
+</style>
+</head>
+<body>
+  <main class="card">
+    <svg class="badge" viewBox="0 0 200 190" role="img" aria-label="לוגו Mr-Travel">
+      <circle cx="100" cy="88" r="80" fill="var(--primary)"/>
+      <text x="100" y="108" text-anchor="middle" font-family="Arial, sans-serif" font-weight="800" font-size="72" fill="var(--onprimary)" letter-spacing="-2">MR</text>
+      <g fill="var(--ink)">
+        <rect x="46" y="70" width="42" height="26" rx="8"/>
+        <rect x="112" y="70" width="42" height="26" rx="8"/>
+        <rect x="88" y="78" width="24" height="8" rx="4"/>
+        <rect x="30" y="76" width="18" height="6" rx="3"/>
+        <rect x="152" y="76" width="18" height="6" rx="3"/>
+      </g>
+      <path d="M62 132 C74 118, 88 118, 100 128 C112 118, 126 118, 138 132 C132 140, 118 138, 100 146 C82 138, 68 140, 62 132 Z" fill="var(--ink)"/>
+    </svg>
+    <h1>Mr-Travel</h1>
+    <p class="headline">האתר בבנייה — טיסות זולות בדרך אליכם</p>
+    <p class="lede">אנחנו עובדים על האתר. השאירו מייל ותהיו הראשונים לדעת כשעולים לאוויר.</p>
+    <form onsubmit="event.preventDefault(); this.querySelector('button').textContent='תודה, נעדכן!';">
+      <input type="email" required placeholder="האימייל שלכם" aria-label="האימייל שלכם">
+      <button type="submit">עדכנו אותי</button>
+    </form>
+    <p class="note">Mr-Travel.co.il · בקרוב</p>
+  </main>
+</body>
+</html>
