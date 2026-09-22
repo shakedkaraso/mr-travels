@@ -1,11 +1,17 @@
 name: Supabase keep-alive
 
 # Free-tier Supabase projects pause after 7 days with no activity. This
-# pings the project's REST API once a day (well under that threshold) so
-# it never pauses. The key below is a Supabase "publishable" key, which
-# Supabase's own dashboard labels safe to share publicly (it's the same
-# key meant to ship inside client-side browser code) — no repo secret
-# needed for it.
+# pings the project's Auth health endpoint once a day (well under that
+# threshold) so it never pauses.
+#
+# Endpoint choice: the REST API root (`/rest/v1/`) rejects anon/publishable
+# keys on this project (`UNAUTHORIZED_INVALID_API_KEY_TYPE` — that specific
+# path requires service_role), so it's useless as an anon-key ping target.
+# `/auth/v1/health` accepts the anon key and returns a clean 200, so it's
+# used instead.
+#
+# The key is the legacy `anon`/`public` key, read from a repo secret named
+# SUPABASE_ANON_KEY (Settings -> Secrets and variables -> Actions).
 
 on:
   schedule:
@@ -16,13 +22,15 @@ jobs:
   ping:
     runs-on: ubuntu-latest
     steps:
-      - name: Ping Supabase REST API
+      - name: Ping Supabase Auth health endpoint
+        env:
+          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
         run: |
           status=$(curl -sS -o /dev/null -w "%{http_code}" \
-            "https://niznyouzvtnamcosybtg.supabase.co/rest/v1/" \
-            -H "apikey: sb_publishable_k-S5DwqOft6CuPHjdz0nlg_mCVMOdF1")
-          echo "Supabase REST API responded with HTTP $status"
-          if [ "$status" -ge 500 ]; then
-            echo "Server error from Supabase" >&2
+            "https://niznyouzvtnamcosybtg.supabase.co/auth/v1/health" \
+            -H "apikey: $SUPABASE_ANON_KEY")
+          echo "Supabase Auth health responded with HTTP $status"
+          if [ "$status" -ne 200 ]; then
+            echo "Expected HTTP 200, got $status" >&2
             exit 1
           fi
