@@ -1,2 +1,7 @@
 .env
 .env.local
+
+# Visual Editor — dev-only tooling, never deployed
+.visual-editor/node_modules/
+.visual-editor/.backups/
+.visual-editor/package-lock.json

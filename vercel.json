@@ -1,0 +1,6 @@
+{
+  "rewrites": [
+    { "source": "/home-page", "destination": "https://mr-travels-web.vercel.app" },
+    { "source": "/home-page/:path*", "destination": "https://mr-travels-web.vercel.app/:path*" }
+  ]
+}
