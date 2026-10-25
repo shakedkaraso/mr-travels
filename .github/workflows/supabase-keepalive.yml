@@ -1,14 +1,17 @@
 name: Supabase keep-alive
 
 # Free-tier Supabase projects pause after 7 days with no activity. This
-# pings the project's Auth health endpoint once a day (well under that
-# threshold) so it never pauses.
+# queries a real table once a day (well under that threshold) so it never
+# pauses.
 #
-# Endpoint choice: the REST API root (`/rest/v1/`) rejects anon/publishable
-# keys on this project (`UNAUTHORIZED_INVALID_API_KEY_TYPE` — that specific
-# path requires service_role), so it's useless as an anon-key ping target.
-# `/auth/v1/health` accepts the anon key and returns a clean 200, so it's
-# used instead.
+# Endpoint choice: this used to ping `/auth/v1/health` instead, because the
+# bare REST root (`/rest/v1/` with no resource) rejects the anon key on this
+# project (`UNAUTHORIZED_INVALID_API_KEY_TYPE`). But the project paused
+# again anyway after dozens of straight daily successes against that
+# endpoint - a generic health check most likely isn't the kind of activity
+# that resets Supabase's inactivity clock. Querying an actual table (same
+# `reviews` table the live site's Testimonials component reads with this
+# same anon key) is real data access, which should actually count.
 #
 # The key is the legacy `anon`/`public` key, read from a repo secret named
 # SUPABASE_ANON_KEY (Settings -> Secrets and variables -> Actions).
@@ -22,14 +25,15 @@ jobs:
   ping:
     runs-on: ubuntu-latest
     steps:
-      - name: Ping Supabase Auth health endpoint
+      - name: Query a real table to keep the project active
         env:
           SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
         run: |
           status=$(curl -sS -o /dev/null -w "%{http_code}" \
-            "https://niznyouzvtnamcosybtg.supabase.co/auth/v1/health" \
-            -H "apikey: $SUPABASE_ANON_KEY")
-          echo "Supabase Auth health responded with HTTP $status"
+            "https://niznyouzvtnamcosybtg.supabase.co/rest/v1/reviews?select=id&limit=1" \
+            -H "apikey: $SUPABASE_ANON_KEY" \
+            -H "Authorization: Bearer $SUPABASE_ANON_KEY")
+          echo "Supabase reviews query responded with HTTP $status"
           if [ "$status" -ne 200 ]; then
             echo "Expected HTTP 200, got $status" >&2
             exit 1
