@@ -29,8 +29,16 @@ jobs:
         env:
           SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
         run: |
+          host="niznyouzvtnamcosybtg.supabase.co"
+          # A paused (or deleted) Supabase project stops resolving in DNS
+          # entirely, so no query can wake it. Fail with a clear message
+          # instead of a bare curl error.
+          if ! getent hosts "$host" >/dev/null; then
+            echo "::error::$host does not resolve - the Supabase project is paused or deleted. Resume it from the Supabase dashboard (supabase.com/dashboard/projects); this check can't wake a paused project." >&2
+            exit 1
+          fi
           status=$(curl -sS -o /dev/null -w "%{http_code}" \
-            "https://niznyouzvtnamcosybtg.supabase.co/rest/v1/reviews?select=id&limit=1" \
+            "https://$host/rest/v1/reviews?select=id&limit=1" \
             -H "apikey: $SUPABASE_ANON_KEY" \
             -H "Authorization: Bearer $SUPABASE_ANON_KEY")
           echo "Supabase reviews query responded with HTTP $status"
