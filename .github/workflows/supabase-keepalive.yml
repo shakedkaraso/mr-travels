@@ -1,48 +1,53 @@
 name: Supabase keep-alive
 
-# Free-tier Supabase projects pause after 7 days with no activity. This
-# queries a real table once a day (well under that threshold) so it never
-# pauses.
+# Free-tier Supabase projects pause after about a week without activity.
+# This job writes to the database twice a day so the project never looks
+# inactive.
 #
-# Endpoint choice: this used to ping `/auth/v1/health` instead, because the
-# bare REST root (`/rest/v1/` with no resource) rejects the anon key on this
-# project (`UNAUTHORIZED_INVALID_API_KEY_TYPE`). But the project paused
-# again anyway after dozens of straight daily successes against that
-# endpoint - a generic health check most likely isn't the kind of activity
-# that resets Supabase's inactivity clock. Querying an actual table (same
-# `reviews` table the live site's Testimonials component reads with this
-# same anon key) is real data access, which should actually count.
+# History: earlier versions only *read* (first /auth/v1/health, then one
+# row from `reviews`). The project still paused despite weeks of daily
+# successes, so this version does a real database *write*: it calls the
+# keep_alive_ping() function, which updates a timestamp in a one-row
+# keep_alive table. Set that up once by running supabase/keep_alive.sql in
+# the Supabase SQL Editor.
 #
 # The key is the legacy `anon`/`public` key, read from a repo secret named
-# SUPABASE_ANON_KEY (Settings -> Secrets and variables -> Actions).
+# SUPABASE_ANON_KEY (Settings -> Secrets and variables -> Actions). The
+# anon key can only call keep_alive_ping(); it can't touch the table.
 
 on:
   schedule:
-    - cron: "0 6 * * *"
+    - cron: "17 6,18 * * *"
   workflow_dispatch: {}
 
 jobs:
   ping:
     runs-on: ubuntu-latest
     steps:
-      - name: Query a real table to keep the project active
+      - name: Write to the database to keep the project active
         env:
           SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
         run: |
           host="niznyouzvtnamcosybtg.supabase.co"
-          # A paused (or deleted) Supabase project stops resolving in DNS
-          # entirely, so no query can wake it. Fail with a clear message
-          # instead of a bare curl error.
+          # A paused (or deleted) Supabase project drops out of DNS entirely,
+          # so no request can wake it. Fail with a clear message instead of
+          # a bare curl error.
           if ! getent hosts "$host" >/dev/null; then
-            echo "::error::$host does not resolve - the Supabase project is paused or deleted. Resume it from the Supabase dashboard (supabase.com/dashboard/projects); this check can't wake a paused project." >&2
+            echo "::error::$host does not resolve - the Supabase project is paused or deleted. Resume it from the Supabase dashboard (supabase.com/dashboard/projects); this job can't wake a paused project." >&2
             exit 1
           fi
-          status=$(curl -sS -o /dev/null -w "%{http_code}" \
-            "https://$host/rest/v1/reviews?select=id&limit=1" \
+          response=$(curl -sS -w "\n%{http_code}" -X POST \
+            "https://$host/rest/v1/rpc/keep_alive_ping" \
             -H "apikey: $SUPABASE_ANON_KEY" \
-            -H "Authorization: Bearer $SUPABASE_ANON_KEY")
-          echo "Supabase reviews query responded with HTTP $status"
+            -H "Authorization: Bearer $SUPABASE_ANON_KEY" \
+            -H "Content-Type: application/json" \
+            -d '{}')
+          status=$(echo "$response" | tail -n1)
+          body=$(echo "$response" | sed '$d')
+          echo "keep_alive_ping responded with HTTP $status: $body"
           if [ "$status" -ne 200 ]; then
-            echo "Expected HTTP 200, got $status" >&2
+            if [ "$status" -eq 404 ]; then
+              echo "::error::keep_alive_ping() not found - run supabase/keep_alive.sql once in the Supabase SQL Editor." >&2
+            fi
             exit 1
           fi
